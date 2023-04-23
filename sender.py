@@ -9,32 +9,35 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 import time
 
-BASE_URL = "https://web.whatsapp.com/"
-CHAT_URL = "https://web.whatsapp.com/send?phone={phone}&text&type=phone_number&app_absent=1"
+class Sender:
+    def __init__(self, phone):
+        BASE_URL = "https://web.whatsapp.com/"
+        CHAT_URL = "https://web.whatsapp.com/send?phone={phone}&text&type=phone_number&app_absent=1"
 
-phone = 56900000000
-message = "test"
+        options = Options()
+        options.add_experimental_option("detach", True)
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-options = Options()
-options.add_experimental_option("detach", True)
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        self.driver.get(BASE_URL)
 
-driver.get("https://web.whatsapp.com/")
+        self.driver.get(CHAT_URL.format(phone=phone))
+        time.sleep(3)
 
-driver.get(CHAT_URL.format(phone=phone))
-time.sleep(3)
+        # chat text box location
+        inp_xpath = (
+            '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]'
+        )
+        self.input_box = WebDriverWait(self.driver, 60).until(
+            expected_conditions.presence_of_element_located((By.XPATH, inp_xpath))
+        )
 
-# chat text box location
-inp_xpath = (
-    '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]'
-)
-input_box = WebDriverWait(driver, 60).until(
-    expected_conditions.presence_of_element_located((By.XPATH, inp_xpath))
-)
+    def send_message(self, message, amount=1):
+        for i in range(amount):
+            self.input_box.send_keys(message)
+            self.input_box.send_keys(Keys.ENTER)
 
-for i in range(20):
-    input_box.send_keys(message)
-    input_box.send_keys(Keys.ENTER)
+    def destroy(self):
+        self.driver.quit()
 
 
 
