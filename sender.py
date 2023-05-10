@@ -11,6 +11,14 @@ from util import copy_image_to_clipboard
 import time
 
 class Sender:
+    text_box_xpath = (
+        '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]'
+    )
+
+    image_box_xpath = (
+        '//*[@id="app"]/div/div/div[3]/div[2]/span/div/span/div/div/div[2]/div/div[1]/div[3]/div/div/div[2]/div[1]/div[1]'
+    )
+
     def __init__(self, phone):
         BASE_URL = "https://web.whatsapp.com/"
         CHAT_URL = "https://web.whatsapp.com/send?phone={phone}&text&type=phone_number&app_absent=1"
@@ -22,38 +30,30 @@ class Sender:
         self.driver.get(BASE_URL)
 
         self.driver.get(CHAT_URL.format(phone=phone))
-        time.sleep(3)
-
-        # chat text box location
-        input_xpath = (
-            '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]'
-        )
-        self.input_box = WebDriverWait(self.driver, 60).until(
-            expected_conditions.presence_of_element_located((By.XPATH, input_xpath))
-        )
 
     def send_message(self, message, amount=1):
+        text_box = WebDriverWait(self.driver, 60).until(
+            expected_conditions.presence_of_element_located((By.XPATH, self.text_box_xpath))
+        )
+
         for i in range(amount):
-            self.input_box.send_keys(message)
-            self.input_box.send_keys(Keys.ENTER)
+            text_box.send_keys(message)
+            text_box.send_keys(Keys.ENTER)
 
     def send_image(self, path, amount=1):
         copy_image_to_clipboard(path)
 
         for i in range(amount):
-            self.input_box.send_keys(Keys.CONTROL, 'v')
+            text_box = WebDriverWait(self.driver, 60).until(
+                expected_conditions.presence_of_element_located((By.XPATH, self.text_box_xpath))
+            )
+            text_box.send_keys(Keys.CONTROL, 'v')
 
-        input_xpath = (
-            '//*[@id="app"]/div/div/div[3]/div[2]/span/div/span/div/div/div[2]/div/div[1]/div[3]/div/div/div[2]/div[1]/div[1]'
-        )
-
-        input_img = WebDriverWait(self.driver, 60).until(
-            expected_conditions.presence_of_element_located((By.XPATH, input_xpath))
-        )
-        input_img.send_keys(Keys.ENTER)
+            image_box = WebDriverWait(self.driver, 60).until(
+                expected_conditions.presence_of_element_located((By.XPATH, self.image_box_xpath))
+            )
+            image_box.send_keys(Keys.ENTER)
+            time.sleep(1)
 
     def destroy(self):
         self.driver.quit()
-
-
-
