@@ -1,4 +1,4 @@
-from Sender import Sender
+from sender import *
 from os.path import exists
 
 def read_phone():
@@ -16,8 +16,7 @@ def send_message(sender: Sender):
 
 def send_image(sender: Sender):
     print("Ingrese nombre del archivo:")
-    file = input()
-    path = f"images/{file}"
+    path = input()
 
     if not exists(path):
         print("Error: el archivo no existe")

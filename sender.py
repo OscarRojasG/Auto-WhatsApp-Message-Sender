@@ -6,17 +6,18 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import StaleElementReferenceException
 
 from util import copy_image_to_clipboard 
 import time
 
 class Sender:
     text_box_xpath = (
-        '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]'
+        '//div[@contenteditable="true" and @data-tab="10"]'
     )
 
     image_box_xpath = (
-        '//*[@id="app"]/div/div/div[3]/div[2]/span/div/span/div/div/div[2]/div/div[1]/div[3]/div/div/div[2]/div[1]/div[1]'
+        '//div[@contenteditable="true" and @role="textbox" and not(@tabindex)]'
     )
 
     def __init__(self, phone):
@@ -32,22 +33,30 @@ class Sender:
         self.driver.get(CHAT_URL.format(phone=phone))
 
     def send_message(self, message, amount=1):
-        text_box = WebDriverWait(self.driver, 60).until(
-            expected_conditions.presence_of_element_located((By.XPATH, self.text_box_xpath))
-        )
-
-        for i in range(amount):
-            text_box.send_keys(message)
-            text_box.send_keys(Keys.ENTER)
+        for _ in range(amount):
+            try:
+                text_box = WebDriverWait(self.driver, 60).until(
+                    expected_conditions.presence_of_element_located((By.XPATH, self.text_box_xpath))
+                )
+                text_box.send_keys(message)
+                text_box.send_keys(Keys.ENTER)
+            except StaleElementReferenceException:
+                print("Elemento de texto no válido. Reintentando...")
+                time.sleep(1)
 
     def send_image(self, path, amount=1):
         copy_image_to_clipboard(path)
 
-        for i in range(amount):
-            text_box = WebDriverWait(self.driver, 60).until(
-                expected_conditions.presence_of_element_located((By.XPATH, self.text_box_xpath))
-            )
-            text_box.send_keys(Keys.CONTROL, 'v')
+        count = 0
+        while count < amount:
+            for _ in range(10):
+                text_box = WebDriverWait(self.driver, 60).until(
+                    expected_conditions.presence_of_element_located((By.XPATH, self.text_box_xpath))
+                )
+                text_box.send_keys(Keys.CONTROL, 'v')
+
+                count += 1
+                if count >= amount: break
 
             image_box = WebDriverWait(self.driver, 60).until(
                 expected_conditions.presence_of_element_located((By.XPATH, self.image_box_xpath))
